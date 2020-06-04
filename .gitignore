@@ -2,3 +2,4 @@ __pycache__/app.cpython-37.pyc
 __pycache__/app2.cpython-37.pyc
 .vscode/settings.json
 
+.Pipfile.lock.swp 
