@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculator App</title>
+    <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.min.css' />
+    <style>
+      .wrapper {
+        background-color: white;
+        min-height: 100%;
+        margin-bottom: -50px;
+        height:150px;
+        overflow-y:auto;
+        overflow-x:hidden;
+        border: 0.8px solid rgb(189, 188, 188);
+        border-radius: 4px;
+        -moz-border-radius: 15px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class='container'>
+      <h3>Calculator</h3>
+    </div>
+
+    <div class="container">
+      <form name="my_form" action="/send" method="POST">
+        <label for="Number One">First Number</label>
+        <input id="number_1" type="text" placeholder="First Number" class="u-full-width" name="num1" />
+
+        <label for="Number Two">Second Number</label>
+        <input id="number_2" type="text" placeholder="Second Number" class="u-full-width" name="num2" />
+
+        <label for="Operation">Operation</label>
+        <select id="operation_type" class="u-full-width" name="operation">
+          <option value="add">Add</option>
+          <option value="subtract">Subtract</option>
+          <option value="multiply">Multiply</option>
+          <option value="divide">Divide</option>
+        </select>
+
+        <input style='background-color: orange; color: white;' type="submit" value="Calculate" id="calc_btn" />
+        <br />
+        <div id="mydiv" class="wrapper" style='padding-left: 10px; padding-top: 5px; padding-bottom: 5px;'>
+          <h3 style='color: #ccc;font-size: 30px;'>No history yet..</h3>
+        </div>
+      </form>
+    </div>
+
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/1.7.3/socket.io.min.js"></script>
+    <script type="text/javascript">
+    var index = 'history_calculation'
+      var socket = io.connect('http://' + document.domain + ':' + location.port + '/send');
+      socket.on('connect', function() {
+        history_list = JSON.parse(localStorage.getItem(index) || '[]')
+        if (history_list && history_list.length != 0){
+          $('#mydiv h3').remove()
+          $('#mydiv p').remove()
+          for (let i=0; i<history_list.length; i++){
+            $('#mydiv').prepend('<div><p>' + history_list[i] + '</p></div>')
+          }
+        }
+
+        var form = $('form').on('submit', function(e) {
+          e.preventDefault()
+          let num_1 = document.getElementById('number_1').value;
+          let num_2 = document.getElementById('number_2').value;
+          let operation_type = document.getElementById('operation_type').value;
+          socket.emit('my event', {
+            'n1': num_1,
+            'n2': num_2,
+            'operation_type': operation_type
+          })
+        })
+      })
+      socket.on('my response', function(msg) {
+        if (typeof msg.result !== 'undefined' && typeof msg.history !== 'undefined') {
+          history_list.push(msg.history)
+          localStorage.setItem(index, JSON.stringify(history_list))
+          $('#mydiv h3').remove()
+          $('#mydiv p').remove()
+          for (let i=0; i<history_list.length; i++){
+            $('#mydiv').prepend('<div><p>' + history_list[i] + '</p></div>')
+          }
+          if (history_list.length >= 10) {
+            history_list.shift()
+          }
+        }
+      })
+
+      window.onbeforeunload = function() {
+      localStorage.clear();
+      return '';
+    };
+    </script>
+  </body>
+
+</html>
